@@ -33,6 +33,9 @@ namespace UnityEngine.EventSystems
         public float minSwipeMovement = 0;
         [Tooltip("Distance scrolled when swipe scroll occurs")]
         public float swipeScrollScale = 4f;
+        
+        private string triggerAxis = "Right Trigger";
+        private float lastTrigger = 0;
 
         #region GearVR swipe scroll
         private Vector2 swipeStartPos;
@@ -782,19 +785,22 @@ namespace UnityEngine.EventSystems
         /// <returns></returns>
         protected PointerEventData.FramePressState GetGazeButtonState()
         {
-            var pressed = Input.GetKeyDown(gazeClickKey);
-            var released = Input.GetKeyUp(gazeClickKey);
-
+            var keyPressed = Input.GetKeyDown(gazeClickKey);
+            var keyReleased = Input.GetKeyUp(gazeClickKey);
+            var triggerPressed = Input.GetAxis(triggerAxis) == 0.2f;
+            var triggerReleased = Input.GetAxis(triggerAxis) < 0.2f && lastTrigger == 0.2f;
+            lastTrigger = Input.GetAxis(triggerAxis);
+            
 #if UNITY_ANDROID && !UNITY_EDITOR
-            pressed |= Input.GetMouseButtonDown(0);
-            released |= Input.GetMouseButtonUp(0);
+            keyPressed |= Input.GetMouseButtonDown(0);
+            keyReleased |= Input.GetMouseButtonUp(0);
 #endif
 
-            if (pressed && released)
+            if ((keyPressed || triggerPressed) && (keyReleased || triggerReleased))
                 return PointerEventData.FramePressState.PressedAndReleased;
-            if (pressed)
+            if (keyPressed || triggerPressed)
                 return PointerEventData.FramePressState.Pressed;
-            if (released)
+            if (keyReleased || triggerReleased)
                 return PointerEventData.FramePressState.Released;
             return PointerEventData.FramePressState.NotChanged;
         }
